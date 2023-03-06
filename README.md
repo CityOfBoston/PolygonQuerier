@@ -2,7 +2,7 @@
 #### A Python utility for systematically extracting point-based spatial data within a polygon/multipolygon area of interest from data sources that only support nearest-neighbor queries.
 
 <p align="center">
-  <img src="https://github.com/bpda-research-division/polygonquerier/blob/main/img/pq_demo.gif">
+  <img src="https://github.com/CityOfBoston/PolygonQuerier/blob/main/img/pq_demo.gif">
 </p>
 
 Many sources of point-based spatial data do not natively support queries that return all data points within a polygon/multipolygon area of interest. In particular, web-based APIs for point-of-interest location data (e.g. from companies like Google, Bing, Yelp, etc.) tend to support only nearest-neighbor queries, returning a subset of points of interest that are nearest to a given set of coordinates. This works well for applications like navigation, routing, and web search. However, for other applications, it's desirable to pull all available point-of-interest data from within a bounded area of interest, not just for a circular area around a single point.
@@ -73,7 +73,7 @@ Note that PolylabelPQ and H3PQ handle target_coverage in slightly different ways
 For H3PQ, the coverage fraction is calculated by dividing the number of hexagons not currently covered by query results by the original number of hexagons approximating the area of interest. H3PQ uses a conservative approximation to determine which hexagons are covered by the query: only hexagons whose shortest hexagon-distance from the queried hexagon is less than the query coverage radius are removed, as illustrated in the diagram below:
 
 <p align="center">
-  <img src="https://github.com/bpda-research-division/polygonquerier/blob/main/img/hex_coverage.png">
+  <img src="https://github.com/CityOfBoston/PolygonQuerier/blob/main/img/hex_coverage.png">
 </p>
 
 The set of hexagons that is removed from consideration will therefore always be a smaller area than the circular query coverage area. This guarantees that none of the original area of interest will be falsely marked as covered by query results, although it does introduce opportunities for duplicate results to be pulled in the space between the circular coverage area and the removed hexagons.
