@@ -7,11 +7,11 @@
 
 Many sources of point-based spatial data do not natively support queries that return all data points within a polygon/multipolygon area of interest. In particular, web-based APIs for point-of-interest location data (e.g. from companies like Google, Bing, Yelp, etc.) tend to support only nearest-neighbor queries, returning a subset of points of interest that are nearest to a given set of coordinates. This works well for applications like navigation, routing, and web search. However, for other applications, it's desirable to pull all available point-of-interest data from within a bounded area of interest, not just for a circular area around a single point.
 
-PolygonQuerier is a tool that executes nearest-neighbor queries iteratively until the circular-area results from those queries sufficiently cover an area of interest. In order to do this efficiently, PolygonQuerier repeatedly calculates the pole of inaccessibility of the area of interest (the point within it that is farthest away from any edge) as it gets covered by results. The above animation shows how PolygonQuerier successively calculates poles of inaccessibility of an area of interest (in this case, the city of Boston) in order to gradually cover the entire city with results from a point-of-interest data source using nearest-neighbor queries. 
+PolygonQuerier is a tool that executes nearest-neighbor queries iteratively until the circular-area results from those queries sufficiently cover an area of interest. In order to do this efficiently, PolygonQuerier repeatedly calculates the pole of inaccessibility of the area of interest (the point within it that is farthest away from any edge) as it gets covered by results. The above animation shows how PolygonQuerier successively calculates poles of inaccessibility within the city of Boston in order to gradually cover the entire city with results from a point-of-interest data source using nearest-neighbor queries. 
 
 ## Setup
 
-PolygonQuerier is not currently published on any package managers like PyPI or conda. To use it in your code, download or clone this repository locally. You will also need to have the following packages installed on your version of Python for PolygonQuerier to function: numpy, matplotlib, pyproj, shapely, h3.
+PolygonQuerier is not currently published on any Python package managers like PyPI or conda. To use it in your code, download or clone this repository locally. You will also need to have the numpy, matplotlib, pyproj, shapely, and h3 packages installed on your version of Python 3.x for PolygonQuerier to function.
 
 To initialize a PolygonQuerier, you must pass in a WKT string representing your area of interest. You must also specify a tolerance in kilometers indicating the maximum acceptable degree of imprecision when calculating successive poles of inaccessibility. An optional third parameter allows you to specify the integer EPSG code of the coordinate reference system that your WKT string uses. By default, PolygonQuerier assumes that your WKT string uses latitude/longitude (EPSG:4326) coordinates.
 ```
@@ -102,14 +102,15 @@ pq.plot(save_file = 'your_image.png')
 
 #### pq.coords_in_original_area() and pq.coords_in_current_area()
 
-These PolygonQuerier methods take exactly two arguments, a latitude and a longitude, and return a boolean representing whether those coordinates are within the area of interest. These methods are identical, but the former considers the original area of interest, while the latter considers the "current" one, meaning the portions of the original area of interest that haven't already been covered by results. 
+These PolygonQuerier methods take exactly two arguments, a latitude and a longitude, and return a boolean representing whether those coordinates are within the area of interest. These methods are identical, but the former considers the original area of interest, while the latter considers the "current" (the space that hasn't already been covered by results). 
 
 These methods offer the ability to better control how results are handled inside of your_query_function(). For example, you can choose one of these methods to filter your results before using them for something else:
 ```
 def your_query_function(latitude, longitude, *your custom arguments*):
     # ...query the data source and store them in a variable called results...
     filtered_results = [r for r in results if pq.coords_in_current_area(r['latitude'], r['longitude'])] 
-    # ...do stuff with filtered_results, calculate the coverage radius
+    # ...do stuff with filtered_results...
+    # ...calculate the coverage radius...
     return query_coverage_radius_km
     
 pq.run(lambda lat, lon: your_query_function(lat, lon, *your custom arguments*))
