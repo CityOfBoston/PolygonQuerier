@@ -24,31 +24,34 @@ my_epsg = 26986
 
 You have a choice between two flavors of PolygonQuerier, which use different algorithms for calculating poles of inaccessibility. 
 
-### Polylabel version
+### PolylabelPQ
 
-PolylabelPQ is built on the [polylabel algorithm](https://github.com/mapbox/polylabel) by Volodymyr Agafonkin.
+PolylabelPQ is built on the [polylabel algorithm](https://github.com/mapbox/polylabel) by Volodymyr Agafonkin. This algorithm is precise and should be sufficiently performant for most uses of PolygonQuerier.
 ```
 pq = PolylabelPQ(my_area_wkt_string, my_tolerance)
 ```
 
-### H3 version
+### H3PQ
 
-For most applications, PolylabelPQ should be sufficiently performant. However, H3PQ offers an alternative and more approximate algorithm for computing poles of inaccessibility which can reduce total processing times for applications where large numbers of queries are required in order to fully cover the area of interest. H3PQ uses the [H3 spatial indexing system](https://h3geo.org/) to represent your area of interest as a set of hexagonal grid cells.
+H3PQ offers an alternative and more approximate algorithm for computing poles of inaccessibility. By doing some extra up-front calculations to represent your area of interest as a set of hexagonal grid cells from the the [H3 spatial indexing system](https://h3geo.org/), H3PQ can reduce total processing times for applications where large numbers of queries are required in order to fully cover the area of interest. For more detail on the algorithms behind H3PQ, read the "Notes on pole-of-inaccessibility algorithms" section of this document.
 ```
 pq = H3PQ(my_area_wkt_string, my_tolerance)
 ```
-Note that when using H3PQ, the effective precision of pole-of-inaccessibility calculations may not exactly match your specified tolerance, owing to the fact that the H3 system uses 16 discrete [levels of precision](https://h3geo.org/docs/core-library/restable/). H3PQ will choose a level of precision that's guaranteed to be equal or better than your specified tolerance. For example, specifying a tolerance of 0.1 km will use hexagons at H3 resolution 10, which have an average edge length globally of around 0.07 km. However, there is a minimum effective precision for H3PQ, owing to the fact that the highest H3 resolution is 15, which has an average edge length of around 0.0005 km (0.5 meters). Specifying a tolerance smaller than this when initializing an H3PQ will thus raise an exception.
+Note that when using H3PQ, the effective precision of pole-of-inaccessibility calculations may not exactly match your specified tolerance, owing to the fact that the H3 system uses 16 discrete [levels of precision](https://h3geo.org/docs/core-library/restable/). H3PQ will choose a level of precision that's guaranteed to be equal or better than your specified tolerance. For example, an H3PQ with a specified tolerance of 0.1 km will use hexagons at H3 resolution 10, which have an average edge length globally of around 0.07 km. However, there is a minimum effective precision for H3PQ, owing to the fact that the highest H3 resolution is 15, which has an average edge length of around 0.0005 km (0.5 meters). Specifying a tolerance smaller than this when initializing an H3PQ will raise an exception.
 
 ## Running a PolygonQuerier
 
-PolygonQuerier is meant to be usable across data sources. Therefore, to use one when pulling results from a given data source, you must create a function that...
+PolygonQueriers do not handle any of the details of querying particular data sources. Therefore, to run a PolygonQuerier on a particular data source, you must write a function that...
 - takes in a latitude and a longitude as arguments
 - queries the data source for points of interest near the given latitude & longitude, sorted by distance, such that the returned results cover a circular area
-- returns the distance (in km) of the radius of the circle that covers the results that were returned. 
+- returns the distance (in kilomters) of the radius of the circle that covers the results that were returned. 
 ... and pass in that function as an argument to the PolygonQuerier run() method, as demonstrated below:
 ```
 def your_query_function(latitude, longitude, *your custom arguments*):
-    # define how you'll query the data source, store results, calculate the coverage radius, etc.
+    ...
+    ... # define how you'll query the data source, handle the results that are returned, calculate the coverage radius, etc.
+    ...
+    
     return query_coverage_radius_km
     
 pq.run(lambda lat, lon: your_query_function(lat, lon, *your custom arguments*))
@@ -102,7 +105,7 @@ pq.plot(save_file = 'your_image.png')
 
 #### pq.coords_in_original_area() and pq.coords_in_current_area()
 
-These PolygonQuerier methods take exactly two arguments, a latitude and a longitude, and return a boolean representing whether those coordinates are within the area of interest. These methods are identical, but the former considers the original area of interest, while the latter considers the "current" (the space that hasn't already been covered by results). 
+These PolygonQuerier methods take exactly two arguments, a latitude and a longitude, and return a boolean representing whether those coordinates are within the area of interest. These methods are identical, but the former considers the original area of interest, while the latter considers the "current" area of interest (the space that hasn't already been covered by results by the PolygonQuerier). 
 
 These methods offer the ability to better control how results are handled inside of your_query_function(). For example, you can choose one of these methods to filter your results before using them for something else:
 ```
